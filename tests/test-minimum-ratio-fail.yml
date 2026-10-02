@@ -1,0 +1,77 @@
+name: Test minimum ratio failure
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create head and base lcov files where head < base
+        run: |
+          mkdir -p coverage
+
+          # Head coverage: 1 out of 4 lines covered = 25%
+          cat > coverage/lcov.info << 'EOF'
+          TN:
+          SF:src/index.js
+          FN:1,main
+          FNDA:1,main
+          FNF:1
+          FNH:1
+          DA:1,1
+          DA:2,0
+          DA:3,0
+          DA:4,0
+          LF:4
+          LH:1
+          BRF:0
+          BRH:0
+          end_of_record
+          EOF
+
+          # Base coverage: 4 out of 4 lines covered = 100%
+          cat > coverage/base-lcov.info << 'EOF'
+          TN:
+          SF:src/index.js
+          FN:1,main
+          FNDA:1,main
+          FNF:1
+          FNH:1
+          DA:1,1
+          DA:2,1
+          DA:3,1
+          DA:4,1
+          LF:4
+          LH:4
+          BRF:0
+          BRH:0
+          end_of_record
+          EOF
+
+      # diff = 25 - 100 = -75; minimum-ratio = 50; coverageDiffAlert = -75 + 50 = -25 < 0 => setFailed
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          lcov-file: ./coverage/lcov.info
+          base-lcov-file: ./coverage/base-lcov.info
+          minimum-ratio: "50"
+          send-summary-comment: "false"
+          show-annotations: ""
+
+      - name: Assert action failed due to minimum ratio violation
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action correctly failed because coverage dropped below minimum ratio"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "FAIL: action should have failed due to minimum ratio violation"
+            exit 1
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

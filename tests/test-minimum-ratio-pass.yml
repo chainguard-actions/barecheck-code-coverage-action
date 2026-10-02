@@ -1,0 +1,89 @@
+name: Test minimum ratio pass
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create head and base lcov files where head >= base
+        run: |
+          mkdir -p coverage
+
+          # Head coverage: 4 out of 4 lines covered = 100%
+          cat > coverage/lcov.info << 'EOF'
+          TN:
+          SF:src/index.js
+          FN:1,main
+          FNDA:1,main
+          FNF:1
+          FNH:1
+          DA:1,1
+          DA:2,1
+          DA:3,1
+          DA:4,1
+          LF:4
+          LH:4
+          BRF:0
+          BRH:0
+          end_of_record
+          EOF
+
+          # Base coverage: 3 out of 4 lines covered = 75%
+          cat > coverage/base-lcov.info << 'EOF'
+          TN:
+          SF:src/index.js
+          FN:1,main
+          FNDA:1,main
+          FNF:1
+          FNH:1
+          DA:1,1
+          DA:2,1
+          DA:3,1
+          DA:4,0
+          LF:4
+          LH:3
+          BRF:0
+          BRH:0
+          end_of_record
+          EOF
+
+      # diff = 100 - 75 = 25; minimum-ratio = 10; coverageDiffAlert = 25 + 10 = 35 >= 0 => pass
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          lcov-file: ./coverage/lcov.info
+          base-lcov-file: ./coverage/base-lcov.info
+          minimum-ratio: "10"
+          send-summary-comment: "false"
+          show-annotations: ""
+
+      - name: Assert percentage output is set
+        env:
+          PERCENTAGE: ${{ steps.action.outputs.percentage }}
+        run: |
+          echo "percentage: $PERCENTAGE"
+          if [ -z "$PERCENTAGE" ]; then
+            echo "FAIL: percentage output is empty"
+            exit 1
+          fi
+          echo "PASS: percentage is '$PERCENTAGE'"
+
+      - name: Assert diff output is positive
+        env:
+          DIFF: ${{ steps.action.outputs.diff }}
+        run: |
+          echo "diff: $DIFF"
+          if [ -z "$DIFF" ]; then
+            echo "FAIL: diff output is empty"
+            exit 1
+          fi
+          IS_POSITIVE=$(echo "$DIFF" | awk '{print ($1 > 0) ? "yes" : "no"}')
+          echo "is_positive: $IS_POSITIVE"
+          if [ "$IS_POSITIVE" != "yes" ]; then
+            echo "FAIL: expected diff to be positive, got '$DIFF'"
+            exit 1
+          fi
+          echo "PASS: diff is positive '$DIFF'"

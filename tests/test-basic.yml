@@ -1,0 +1,58 @@
+name: Test basic code coverage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create lcov file with 100% coverage
+        run: |
+          mkdir -p coverage
+          cat > coverage/lcov.info << 'EOF'
+          TN:
+          SF:src/index.js
+          FN:1,main
+          FNDA:1,main
+          FNF:1
+          FNH:1
+          DA:1,1
+          DA:2,1
+          DA:3,1
+          LF:3
+          LH:3
+          BRF:0
+          BRH:0
+          end_of_record
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          lcov-file: ./coverage/lcov.info
+          send-summary-comment: "false"
+          show-annotations: ""
+
+      - name: Assert percentage output is set
+        env:
+          PERCENTAGE: ${{ steps.action.outputs.percentage }}
+        run: |
+          echo "percentage: $PERCENTAGE"
+          if [ -z "$PERCENTAGE" ]; then
+            echo "FAIL: percentage output is empty"
+            exit 1
+          fi
+          echo "PASS: percentage is '$PERCENTAGE'"
+
+      - name: Assert diff output is set
+        env:
+          DIFF: ${{ steps.action.outputs.diff }}
+        run: |
+          echo "diff: $DIFF"
+          if [ -z "$DIFF" ]; then
+            echo "FAIL: diff output is empty"
+            exit 1
+          fi
+          echo "PASS: diff is '$DIFF'"
