@@ -1,0 +1,1 @@
+# barecheck-code-coverage-action
