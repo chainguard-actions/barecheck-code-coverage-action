@@ -6,9 +6,9 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 ## Versions
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v1.0.0 | [`v1.0.0`](https://github.com/chainguard-actions/barecheck-code-coverage-action/tree/v1.0.0) | [`d92cdae`](https://github.com/barecheck/code-coverage-action/commit/d92cdaec187f89f0886ccec37acf11e2a6a85f70) |
+| Version | Tag | Upstream commit | Hardening report |
+|---------|-----|-----------------|------------------|
+| v1.0.0 | [`v1.0.0`](https://github.com/chainguard-actions/barecheck-code-coverage-action/tree/v1.0.0) | [`d92cdae`](https://github.com/barecheck/code-coverage-action/commit/d92cdaec187f89f0886ccec37acf11e2a6a85f70) | [`HARDENING.md`](https://github.com/chainguard-actions/barecheck-code-coverage-action/blob/v1.0.0/HARDENING.md) |
 
 ## Privacy
 
